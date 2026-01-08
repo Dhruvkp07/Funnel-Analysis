@@ -1,0 +1,76 @@
+from faker import Faker
+import pandas as pd
+import random
+from datetime import timedelta
+
+# 1. Initialize Faker and Lists
+fake = Faker()
+data = []
+
+# 2. Define Dimensions and Probabilities [3], [4]
+stages = ['Browse', 'Add to Cart', 'Checkout', 'Purchase']
+probabilities = {
+    'Browse': 1.0,          # 100% of users browse
+    'Add to Cart': 0.7,     # 70% move to cart [5]
+    'Checkout': 0.5,        # 50% of those move to checkout
+    'Purchase': 0.3         # 30% of those actually buy
+}
+
+devices = ['Mobile', 'Desktop', 'Tablet']
+regions = ['North', 'South', 'East', 'West']
+channels = ['Google Ads', 'Organic', 'Email', 'Social Media']
+categories = ['Electronics', 'Fashion', 'Home', 'Beauty', 'Sports']
+
+# 3. Generate Data for 10,000 Users [6]
+print("Generating data...")
+
+for i in range(1, 10001):
+    # Create User and Session IDs [6], [7]
+    user_id = f"USR-{i:05d}"
+    session_id = f"SES-{i:05d}"
+
+    # Generate a random start time within the last 30 days [8]
+    event_time = fake.date_time_between(start_date='-30d', end_date='now')
+
+    # Randomly assign user attributes [9]
+    device = random.choice(devices)
+    region = random.choice(regions)
+    channel = random.choice(channels)
+    category = random.choice(categories)
+
+    # 4. Stage Progression Logic [10]
+    for stage in stages:
+        # Check probability to see if user continues to this stage
+        if random.random() < probabilities[stage]:
+
+            # Determine Revenue: Only generate if stage is 'Purchase' [9]
+            revenue = round(random.uniform(50, 500), 2) if stage == 'Purchase' else 0
+
+            # Bonus Flag Logic [9]
+            bonus_flag = 'No' if stage == 'Purchase' else 'Yes'
+
+            # Append Record [11]
+            data.append({
+                'User ID': user_id,
+                'Session ID': session_id,
+                'Event Time': event_time,
+                'Event': stage,
+                'Device': device,
+                'Region': region,
+                'Channel': channel,
+                'Product Category': category,
+                'Revenue': revenue,
+                'Bonus Flag': bonus_flag
+            })
+
+            # Add time delay (2-5 mins) between stages [11]
+            event_time += timedelta(minutes=random.randint(2, 5))
+
+        else:
+            # User dropped off, stop generating events for this session [12]
+            break
+
+# 5. Create DataFrame and Save [12]
+df = pd.DataFrame(data)
+df.to_csv('Funnel_Analysis_Data.csv', index=False)
+print(f"Funnel Dataset Generated Successfully with {len(df)} rows.")
